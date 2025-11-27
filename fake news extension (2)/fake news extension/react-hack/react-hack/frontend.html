@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Fake News & Deepfake Detection</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #020617;
+      --accent: #6366f1;
+      --accent2: #ec4899;
+      --danger: #f97373;
+      --warning: #facc15;
+      --safe: #4ade80;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #020617 0, #000 60%);
+      color: var(--text);
+    }
+
+    code {
+      background: #020617;
+      padding: 1px 4px;
+      border-radius: 4px;
+      border: 1px solid #111827;
+      font-size: 10px;
+    }
+
+    /* ---------- MAIN PAGE ---------- */
+    .page-shell {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 24px 16px 80px;
+    }
+
+    header.site-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding-bottom: 10px;
+    }
+
+    .logo-text {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo-badge {
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top left, #4f46e5, #ec4899);
+      box-shadow: 0 8px 20px rgba(79, 70, 229, 0.8);
+    }
+
+    .logo-badge svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .logo-title {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .logo-sub {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    nav.site-nav {
+      display: flex;
+      gap: 10px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    nav.site-nav a {
+      color: var(--muted);
+      text-decoration: none;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      transition: 0.15s;
+    }
+
+    nav.site-nav a:hover {
+      border-color: rgba(148, 163, 184, 0.4);
+      color: var(--text);
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    /* HERO */
+    .hero {
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.2fr);
+      gap: 16px;
+      align-items: center;
+    }
+
+    @media (max-width: 900px) {
+      .hero {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .hero-left h1 {
+      font-size: clamp(24px, 4vw, 30px);
+      margin: 4px 0 8px;
+    }
+
+    .hero-left h1 span {
+      background: linear-gradient(to right, #6366f1, #ec4899);
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .hero-text {
+      font-size: 13px;
+      color: var(--muted);
+      max-width: 520px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .btn-main {
+      border-radius: 999px;
+      border: none;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed, #ec4899);
+      color: #fff;
+      box-shadow: 0 14px 30px rgba(79, 70, 229, 0.85);
+      background-size: 200% 200%;
+      animation: heroGrad 10s ease infinite;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .btn-main:hover {
+      transform: translateY(-1px) scale(1.01);
+      box-shadow: 0 18px 40px rgba(79, 70, 229, 1);
+    }
+
+    .btn-ghost {
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 12px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 0.98);
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+
+    .btn-ghost:hover {
+      background: rgba(17, 24, 39, 1);
+      color: #e5e7eb;
+    }
+
+    @keyframes heroGrad {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .hero-right {
+      border-radius: 16px;
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      background: radial-gradient(circle at top left, #111827 0, #020617 70%);
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.98);
+      padding: 14px;
+      font-size: 13px;
+    }
+
+    .hero-right h2 {
+      font-size: 15px;
+      margin: 0 0 4px;
+    }
+
+    .hero-right p {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* SIMPLE SECTION */
+    section {
+      margin-top: 26px;
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .section-text {
+      font-size: 13px;
+      color: var(--muted);
+      max-width: 700px;
+    }
+
+    .two-cards {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    @media (max-width: 900px) {
+      .two-cards {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .info-card {
+      border-radius: 14px;
+      border: 1px solid rgba(31, 41, 55, 0.95);
+      background: radial-gradient(circle at top, #020617, #020617);
+      padding: 11px 12px;
+      font-size: 13px;
+      box-shadow: 0 14px 28px rgba(15, 23, 42, 0.9);
+    }
+
+    .info-card h3 {
+      font-size: 14px;
+      margin: 0 0 4px;
+    }
+
+    .small-list {
+      margin: 4px 0 0;
+      padding-left: 15px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .small-list li {
+      margin-bottom: 2px;
+    }
+
+    .cta-section {
+      margin-top: 24px;
+      border-radius: 16px;
+      border: 1px solid rgba(31, 41, 55, 0.95);
+      background: radial-gradient(circle at top, rgba(79, 70, 229, 0.2), #020617);
+      padding: 14px 16px 16px;
+      text-align: center;
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.98);
+    }
+
+    .cta-section h2 {
+      font-size: 16px;
+      margin-bottom: 6px;
+    }
+
+    .cta-section p {
+      font-size: 13px;
+      color: var(--muted);
+      max-width: 600px;
+      margin: 0 auto 8px;
+    }
+
+    footer {
+      margin-top: 20px;
+      font-size: 11px;
+      color: #6b7280;
+      text-align: center;
+    }
+
+    /* ---------- FLOATING ICON ---------- */
+    .fab-wrapper {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 50;
+    }
+
+    .fab-tooltip {
+      position: absolute;
+      right: 54px;
+      bottom: 50%;
+      transform: translateY(50%);
+      background: rgba(15, 23, 42, 0.96);
+      color: var(--muted);
+      font-size: 11px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: 0.15s ease;
+    }
+
+    .fab-button {
+      width: 46px;
+      height: 46px;
+      border-radius: 999px;
+      border: none;
+      background: radial-gradient(circle at top left, #4f46e5, #ec4899);
+      box-shadow: 0 12px 28px rgba(79, 70, 229, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: 0.15s ease;
+    }
+
+    .fab-button::before {
+      content: "";
+      position: absolute;
+      inset: -20px;
+      background: radial-gradient(circle, rgba(248, 250, 252, 0.15), transparent);
+      opacity: 0;
+      transition: 0.15s ease;
+    }
+
+    .fab-button:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 18px 36px rgba(79, 70, 229, 1);
+    }
+
+    .fab-button:hover::before {
+      opacity: 1;
+    }
+
+    .fab-wrapper:hover .fab-tooltip {
+      opacity: 1;
+      transform: translateY(50%) translateX(-4px);
+    }
+
+    .fab-icon {
+      position: relative;
+      z-index: 1;
+      width: 24px;
+      height: 24px;
+    }
+
+    /* ---------- POPUP ---------- */
+    .popup-overlay {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at top, rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.96));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: 0.25s ease;
+      z-index: 40;
+      padding: 12px;
+    }
+
+    .popup-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .popup-root {
+      width: 360px;
+      min-height: 320px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .popup-card {
+      position: relative;
+      width: 100%;
+      padding: 14px 13px 14px;
+      border-radius: 18px;
+      background: radial-gradient(circle at top left, #111827 0, #020617 70%);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.98);
+      overflow: hidden;
+      animation: floatIn 0.35s ease-out forwards;
+      transform-origin: top center;
+    }
+
+    .popup-card::before {
+      content: "";
+      position: absolute;
+      inset: -120px;
+      background: conic-gradient(
+        from 180deg,
+        rgba(99, 102, 241, 0.13),
+        rgba(236, 72, 153, 0.09),
+        transparent,
+        rgba(56, 189, 248, 0.2),
+        transparent
+      );
+      opacity: 0.9;
+      mix-blend-mode: screen;
+      pointer-events: none;
+      animation: glowRotate 18s linear infinite;
+    }
+
+    .popup-inner {
+      position: relative;
+      z-index: 1;
+      backdrop-filter: blur(18px);
+    }
+
+    @keyframes floatIn {
+      from { transform: translateY(10px) scale(0.97); opacity: 0; }
+      to { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    @keyframes glowRotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .popup-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .popup-title-block {
+      max-width: 70%;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.9);
+    }
+
+    .popup-title {
+      font-size: 13px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .popup-subtitle {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .chip {
+      font-size: 10px;
+      padding: 4px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      background: radial-gradient(circle at top, #020617, #020617);
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 7px;
+      right: 7px;
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      border: 1px solid rgba(51, 65, 85, 0.9);
+      background: rgba(15, 23, 42, 0.98);
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      cursor: pointer;
+      transition: 0.15s;
+      z-index: 2;
+    }
+
+    .close-btn:hover {
+      background: #111827;
+      transform: scale(1.03);
+      color: #e5e7eb;
+    }
+
+    label[for="textInput"] {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 4px;
+      margin-top: 4px;
+    }
+
+    textarea#textInput {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid rgba(31, 41, 55, 0.95);
+      background: radial-gradient(circle at top, #020617, #020617);
+      padding: 8px 9px;
+      font-size: 12px;
+      color: var(--text);
+      resize: vertical;
+      min-height: 70px;
+      outline: none;
+      transition: 0.18s;
+    }
+
+    textarea#textInput::placeholder {
+      color: #6b7280;
+      font-size: 11px;
+    }
+
+    textarea#textInput:focus {
+      border-color: rgba(129, 140, 248, 0.9);
+      box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .helper {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .btn-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .btn-popup-primary {
+      padding: 7px 13px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed, #ec4899);
+      background-size: 200% 200%;
+      color: #fff;
+      box-shadow: 0 12px 28px rgba(79, 70, 229, 0.7);
+      animation: gradientShift 9s ease infinite;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+
+    .btn-popup-primary:hover {
+      transform: translateY(-1px) scale(1.01);
+      box-shadow: 0 16px 34px rgba(79, 70, 229, 0.9);
+    }
+
+    .btn-popup-primary[disabled] {
+      opacity: 0.7;
+      cursor: wait;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .btn-popup-secondary {
+      padding: 6px 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(51, 65, 85, 0.9);
+      background: rgba(15, 23, 42, 0.98);
+      color: var(--muted);
+      font-size: 11px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: 0.15s;
+    }
+
+    .btn-popup-secondary:hover {
+      background: rgba(17, 24, 39, 1);
+      color: #e5e7eb;
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .pill-small {
+      font-size: 10px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 0.98);
+      color: var(--muted);
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .status-line {
+      margin-top: 6px;
+      font-size: 10px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.8);
+    }
+
+    .status-dot.warning {
+      background: #facc15;
+      box-shadow: 0 0 10px rgba(250, 204, 21, 0.8);
+    }
+
+    .status-dot.danger {
+      background: #f97373;
+      box-shadow: 0 0 10px rgba(248, 113, 113, 0.9);
+    }
+
+    .status-line strong {
+      color: #e5e7eb;
+    }
+
+    .result-box {
+      margin-top: 10px;
+      border-radius: 12px;
+      background: radial-gradient(
+        circle at top right,
+        rgba(79, 70, 229, 0.1),
+        #020617
+      );
+      border: 1px solid rgba(31, 41, 55, 0.95);
+      padding: 8px 9px 9px;
+      font-size: 11px;
+      animation: resultPop 0.25s ease-out;
+    }
+
+    @keyframes resultPop {
+      from { opacity: 0; transform: scale(0.97) translateY(3px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .result-title {
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .label-chip {
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 10px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 1);
+    }
+
+    .label-fake {
+      color: #fecaca;
+      border-color: rgba(248, 113, 113, 0.8);
+      background: rgba(127, 29, 29, 0.9);
+    }
+
+    .label-real {
+      color: #bbf7d0;
+      border-color: rgba(74, 222, 128, 0.8);
+      background: rgba(22, 101, 52, 0.9);
+    }
+
+    .label-unknown {
+      color: #fde68a;
+      border-color: rgba(234, 179, 8, 0.7);
+      background: rgba(113, 63, 18, 0.9);
+    }
+
+    .meter {
+      margin-top: 4px;
+    }
+
+    .meter-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 10px;
+      color: var(--muted);
+      margin-bottom: 3px;
+    }
+
+    .score-number {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .score-safe { color: var(--safe); }
+    .score-med { color: var(--warning); }
+    .score-high { color: var(--danger); }
+
+    .meter-track {
+      position: relative;
+      width: 100%;
+      height: 6px;
+      border-radius: 999px;
+      background: linear-gradient(
+        90deg,
+        rgba(22, 163, 74, 0.3),
+        rgba(250, 204, 21, 0.3),
+        rgba(248, 113, 113, 0.3)
+      );
+      overflow: hidden;
+    }
+
+    .meter-fill {
+      position: absolute;
+      inset: 0;
+      width: 0%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #22c55e, #fbbf24, #f97373);
+      transition: 0.4s ease-out;
+    }
+
+    .flags-row {
+      margin-top: 5px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .flag-chip {
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 1);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .popup-footer {
+      margin-top: 7px;
+      font-size: 9px;
+      color: #6b7280;
+      border-top: 1px solid rgba(15, 23, 42, 1);
+      padding-top: 4px;
+    }
+
+    .spinner {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      border: 2px solid rgba(248, 250, 252, 0.25);
+      border-top-color: #fff;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="page-shell">
+    <!-- HEADER -->
+    <header class="site-header">
+      <div class="logo-text">
+        <div class="logo-badge">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path
+              d="M12 2.5L5 5.5V11.5C5 16.3 8 19.9 12 21.5C16 19.9 19 16.3 19 11.5V5.5L12 2.5Z"
+              stroke="white"
+              stroke-width="1.4"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M10 10.7L11.4 12.1L14.4 9.1"
+              stroke="white"
+              stroke-width="1.4"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </div>
+        <div>
+          <div class="logo-title">FAKE NEWS & DEEPFAKE DETECTION</div>
+          <div class="logo-sub">Simple AI-based checker</div>
+        </div>
+      </div>
+      <nav class="site-nav">
+        <a href="#about">About</a>
+        <a href="#motive">Motive</a>
+        <a href="#try">Try it</a>
+      </nav>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-left">
+        <h1>
+          Check if your news or post is <span>fake or real</span>.
+        </h1>
+        <p class="hero-text">
+          This website lets you paste any news text, social media post, or forward
+          and quickly get an AI-based fake-likelihood score, so you can think
+          before you trust or share it.
+        </p>
+
+        <div class="hero-actions">
+          <button class="btn-main" id="heroCheckBtn">🔍 Open Analyzer</button>
+          <button class="btn-ghost" onclick="document.getElementById('motive').scrollIntoView({behavior:'smooth'})">
+            ℹ️ See the main motive
+          </button>
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <h2>What this site does</h2>
+        <p>
+          It is a frontend for a Fake News Detection System. The backend (in Python)
+          uses a machine learning model like BERT to analyse text and predict whether
+          it looks fake, real, or uncertain.
+        </p>
+      </div>
+    </section>
+
+    <!-- ABOUT -->
+    <section id="about">
+      <div class="section-title">About the project</div>
+      <p class="section-text">
+        This project is a small web application that shows how AI can help detect
+        fake or misleading online content. The user interface is simple: paste text,
+        click analyze, and see a clear risk score and label.
+      </p>
+    </section>
+
+    <!-- MOTIVE + HOW IT WORKS (very short) -->
+    <section id="motive">
+      <div class="two-cards">
+        <div class="info-card">
+          <h3>Main Motive</h3>
+          <p>
+            The main goal is to reduce misinformation and improve digital safety by
+            helping people verify content before believing or forwarding it.
+          </p>
+          <ul class="small-list">
+            <li>Make users doubt suspicious forwards.</li>
+            <li>Encourage “check before share”.</li>
+          </ul>
+        </div>
+        <div class="info-card">
+          <h3>How it works</h3>
+          <ul class="small-list">
+            <li>You paste news / post text.</li>
+            <li>Frontend sends it to backend API
+              (<code>POST /api/check_text</code>).</li>
+            <li>Backend model returns label (FAKE/REAL) + score.</li>
+            <li>Popup shows fake likelihood bar and short explanation.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section id="try" class="cta-section">
+      <h2>Try the fake news checker</h2>
+      <p>
+        Scroll normally, and whenever you want to test a message, click the
+        floating shield icon or the button below to open the analyzer popup.
+      </p>
+      <button class="btn-main" id="ctaCheckBtn">🔍 Check your news now</button>
+    </section>
+
+    <footer>
+      &copy; 2025 Fake News & Deepfake Detection – Simple educational demo.
+    </footer>
+  </div>
+
+  <!-- FLOATING ICON -->
+  <div class="fab-wrapper">
+    <div class="fab-tooltip">Check fake news / forwards</div>
+    <button class="fab-button" id="fakeNewsFab" aria-label="Open Fake News Detector">
+      <svg class="fab-icon" viewBox="0 0 24 24" fill="none">
+        <path
+          d="M12 2.5L5 5.5V11.5C5 16.3 8 19.9 12 21.5C16 19.9 19 16.3 19 11.5V5.5L12 2.5Z"
+          stroke="white"
+          stroke-width="1.6"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M10 10.7L11.4 12.1L14.4 9.1"
+          stroke="white"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </button>
+  </div>
+
+  <!-- POPUP -->
+  <div class="popup-overlay" id="fakeNewsOverlay">
+    <div class="popup-root">
+      <div class="popup-card">
+        <div class="popup-inner">
+          <div class="section-label" style="margin-top:16px;">Profile verifier</div>
+<label for="profileInput">Enter username or profile URL</label>
+<input
+  type="text"
+  id="profileInput"
+  placeholder="e.g., @elonmusk or https://twitter.com/elonmusk"
+/>
+<div class="helper">
+  Checks if the username/profile seems real or suspicious.
+</div>
+
+<div class="btn-row">
+  <button id="profileCheckBtn" class="btn-popup-primary">
+    <span id="profileBtnIcon">🔍</span>
+    <span id="profileBtnLabel">Verify Profile</span>
+  </button>
+  <button id="profileClearBtn" class="btn-popup-secondary">
+    Clear
+  </button>
+</div>
+
+<div class="status-line" id="profileStatusLine">
+  <span class="status-dot" id="profileStatusDot"></span>
+  <span>Status: <strong>Idle</strong></span>
+</div>
+
+<div id="profileResultBox" class="result-box" style="display: none;">
+  <div class="result-header">
+    <div class="result-title" id="profileResultTitle">Profile Result</div>
+    <div id="profileLabelChip" class="label-chip label-unknown">UNKNOWN</div>
+  </div>
+
+  <div class="meter">
+    <div class="meter-label-row">
+      <span>Authenticity score</span>
+      <span id="profileScoreNumber" class="score-number">--%</span>
+    </div>
+    <div class="meter-track">
+      <div id="profileMeterFill" class="meter-fill"></div>
+    </div>
+  </div>
+
+  <div id="profileSummaryText" style="margin-top:4px;"></div>
+</div>
+          <button class="close-btn" id="popupCloseBtn">×</button>
+
+          <div class="popup-header">
+            <div class="popup-title-block">
+              <div class="badge">
+                <span class="badge-dot"></span>
+                Real-time AI Checker
+              </div>
+              <div class="popup-title">FAKE NEWS AND DEEPFAKE DETECTION</div>
+              <div class="popup-subtitle">
+                Paste any text and get an instant fake-likelihood score.
+              </div>
+            </div>
+            <div class="chip">
+              🧠 v1.0 • BERT
+            </div>
+          </div>
+
+          <div class="section-label">Text checker</div>
+          <label for="textInput">Paste text to analyze</label>
+          <textarea
+            id="textInput"
+            placeholder="Paste a WhatsApp forward, tweet, or news snippet here..."
+          ></textarea>
+          <div class="helper">
+            The backend returns a label like <strong>FAKE</strong> / <strong>REAL</strong>
+            with a probability score.
+          </div>
+
+          <div class="btn-row">
+            <button id="analyzeBtn" class="btn-popup-primary">
+              <span id="btnIcon">⚡</span>
+              <span id="btnLabel">Analyze Now</span>
+            </button>
+            <button id="clearBtn" class="btn-popup-secondary">
+              Clear
+            </button>
+            <div class="pill-small">
+              API:
+              <code>/api/check_text</code>
+            </div>
+          </div>
+
+          <div class="status-line" id="statusLine">
+            <span class="status-dot" id="statusDot"></span>
+            <span>Status: <strong>Idle</strong></span>
+          </div>
+
+          <div id="resultBox" class="result-box" style="display: none;">
+            <div class="result-header">
+              <div class="result-title" id="resultTitle">Result</div>
+              <div id="labelChip" class="label-chip label-unknown">UNKNOWN</div>
+            </div>
+
+            <div class="meter">
+              <div class="meter-label-row">
+                <span>Fake likelihood</span>
+                <span id="scoreNumber" class="score-number">--%</span>
+              </div>
+              <div class="meter-track">
+                <div id="meterFill" class="meter-fill"></div>
+              </div>
+            </div>
+
+            <div id="summaryText" style="margin-top: 4px;"></div>
+
+            <div class="flags-row" id="flagsRow"></div>
+          </div>
+
+          <div class="popup-footer">
+            This is an AI assistant. Always double-check important content with
+            official sources and fact-checking sites.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Open / close popup
+    const fab = document.getElementById("fakeNewsFab");
+    const overlay = document.getElementById("fakeNewsOverlay");
+    const closeBtn = document.getElementById("popupCloseBtn");
+    const heroCheckBtn = document.getElementById("heroCheckBtn");
+    const ctaCheckBtn = document.getElementById("ctaCheckBtn");
+
+    function openPopup() {
+      overlay.classList.add("visible");
+    }
+    function closePopup() {
+      overlay.classList.remove("visible");
+    }
+
+    fab.addEventListener("click", openPopup);
+    heroCheckBtn.addEventListener("click", openPopup);
+    ctaCheckBtn.addEventListener("click", openPopup);
+    closeBtn.addEventListener("click", closePopup);
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) closePopup();
+    });
+
+    // Analyzer logic
+    const analyzeBtn = document.getElementById("analyzeBtn");
+    const btnIcon = document.getElementById("btnIcon");
+    const btnLabel = document.getElementById("btnLabel");
+    const clearBtn = document.getElementById("clearBtn");
+    const textInput = document.getElementById("textInput");
+    const statusLine = document.getElementById("statusLine");
+    const statusDot = document.getElementById("statusDot");
+    const resultBox = document.getElementById("resultBox");
+    const resultTitle = document.getElementById("resultTitle");
+    const labelChip = document.getElementById("labelChip");
+    const scoreNumber = document.getElementById("scoreNumber");
+    const meterFill = document.getElementById("meterFill");
+    const summaryText = document.getElementById("summaryText");
+    const flagsRow = document.getElementById("flagsRow");
+
+    function setLoading(isLoading) {
+      if (isLoading) {
+        analyzeBtn.disabled = true;
+        const spinner = document.createElement("div");
+        spinner.className = "spinner";
+        btnIcon.innerHTML = "";
+        btnIcon.appendChild(spinner);
+        btnLabel.textContent = "Analyzing...";
+        statusDot.className = "status-dot warning";
+        statusLine.querySelector("span:nth-child(2)").innerHTML =
+          "Status: <strong>Analyzing text...</strong>";
+      } else {
+        analyzeBtn.disabled = false;
+        btnIcon.textContent = "⚡";
+        btnLabel.textContent = "Analyze Now";
+      }
+    }
+
+    function setStatusIdle() {
+      statusDot.className = "status-dot";
+      statusLine.querySelector("span:nth-child(2)").innerHTML =
+        "Status: <strong>Idle</strong>";
+    }
+
+    function setStatusError() {
+      statusDot.className = "status-dot danger";
+      statusLine.querySelector("span:nth-child(2)").innerHTML =
+        "Status: <strong style='color:#f97373'>Error contacting backend</strong>";
+    }
+
+    function setStatusDone(label) {
+      statusDot.className = label === "FAKE" ? "status-dot danger" : "status-dot";
+      statusLine.querySelector("span:nth-child(2)").innerHTML =
+        "Status: <strong>Done (" + label + ")</strong>";
+    }
+
+    function updateLabelChip(label) {
+      labelChip.className = "label-chip";
+      if (label === "FAKE") labelChip.classList.add("label-fake");
+      else if (label === "REAL") labelChip.classList.add("label-real");
+      else labelChip.classList.add("label-unknown");
+      labelChip.textContent = label;
+    }
+
+    function updateScore(score) {
+      if (typeof score !== "number") {
+        scoreNumber.textContent = "--%";
+        meterFill.style.width = "0%";
+        return;
+      }
+      const pct = Math.round(score * 100);
+      scoreNumber.textContent = pct + "%";
+      meterFill.style.width = Math.min(Math.max(pct, 0), 100) + "%";
+
+      scoreNumber.className = "score-number";
+      if (pct < 40) scoreNumber.classList.add("score-safe");
+      else if (pct < 70) scoreNumber.classList.add("score-med");
+      else scoreNumber.classList.add("score-high");
+    }
+
+    function updateSummary(label) {
+      let summary;
+      if (label === "FAKE") {
+        summary =
+          "This content is likely FAKE / MISLEADING. Do not trust it blindly and avoid forwarding it.";
+      } else if (label === "REAL") {
+        summary =
+          "This content appears REAL / TRUSTWORTHY, but still verify important claims if they seem unbelievable.";
+      } else {
+        summary =
+          "The model is not confident. Treat this content with caution and verify from reliable sources.";
+      }
+      summaryText.textContent = summary;
+    }
+
+    function updateFlags(flags) {
+      flagsRow.innerHTML = "";
+      (flags || []).forEach((f) => {
+        const span = document.createElement("span");
+        span.className = "flag-chip";
+        span.textContent = f;
+        flagsRow.appendChild(span);
+      });
+      if (!flags || !flags.length) {
+        const span = document.createElement("span");
+        span.className = "flag-chip";
+        span.textContent = "No specific flags returned";
+        flagsRow.appendChild(span);
+      }
+    }
+
+    analyzeBtn.addEventListener("click", async () => {
+      const text = textInput.value.trim();
+      if (!text) {
+        alert("Please paste some text first.");
+        return;
+      }
+
+      setLoading(true);
+      resultBox.style.display = "none";
+
+      try {
+        // Call Flask text analysis endpoint
+        const response = await fetch("http://localhost:5000/aRnalyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
+        });
+
+        if (!response.ok) throw new Error("Backend returned " + response.status);
+        const data = await response.json();
+
+        const label = (data.label || "unknown").toUpperCase();
+        const score = typeof data.score === "number" ? data.score : null;
+        const flags = data.flags || data.reasons || [];
+
+        resultTitle.textContent = "Result: " + label;
+        updateLabelChip(label);
+        updateScore(score);
+        updateSummary(label);
+        updateFlags(flags);
+
+        resultBox.style.display = "block";
+        setStatusDone(label);
+      } catch (err) {
+        console.error(err);
+        updateLabelChip("UNKNOWN");
+        updateScore(null);
+        summaryText.textContent =
+          "Could not reach the backend. Make sure the API is running at http://localhost:5000/analyze";
+        updateFlags([]);
+        resultBox.style.display = "block";
+        setStatusError();
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    clearBtn.addEventListener("click", () => {
+      textInput.value = "";
+      resultBox.style.display = "none";
+      setStatusIdle();
+    });
+  </script>
+</body>
+</html>

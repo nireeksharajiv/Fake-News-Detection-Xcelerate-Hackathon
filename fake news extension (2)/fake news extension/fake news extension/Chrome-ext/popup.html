@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Fake News & Deepfake Detection</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #020617;
+      --card-bg: rgba(15, 23, 42, 0.88);
+      --accent: #6366f1;
+      --accent2: #ec4899;
+      --danger: #f97373;
+      --warning: #facc15;
+      --safe: #4ade80;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: rgba(148, 163, 184, 0.25);
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #020617 0, #000 60%);
+      color: var(--text);
+    }
+
+    /* Just demo page content */
+    .page-content {
+      padding: 32px 16px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .page-content h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+    .page-content p {
+      color: var(--muted);
+      max-width: 600px;
+      font-size: 14px;
+    }
+
+    /* ---------- FLOATING ICON BUTTON ---------- */
+    .fab-wrapper {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 50;
+    }
+
+    .fab-tooltip {
+      position: absolute;
+      right: 54px;
+      bottom: 50%;
+      transform: translateY(50%);
+      background: rgba(15, 23, 42, 0.96);
+      color: var(--muted);
+      font-size: 11px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease, transform 0.15s ease;
+    }
+
+    .fab-button {
+      width: 46px;
+      height: 46px;
+      border-radius: 999px;
+      border: none;
+      background: radial-gradient(circle at top left, #4f46e5, #ec4899);
+      box-shadow: 0 12px 28px rgba(79, 70, 229, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .fab-button::before {
+      content: "";
+      position: absolute;
+      inset: -20px;
+      background: radial-gradient(circle, rgba(248, 250, 252, 0.15), transparent);
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+
+    .fab-button:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 18px 36px rgba(79, 70, 229, 1);
+    }
+
+    .fab-button:hover::before {
+      opacity: 1;
+    }
+
+    .fab-wrapper:hover .fab-tooltip {
+      opacity: 1;
+      transform: translateY(50%) translateX(-4px);
+    }
+
+    .fab-icon {
+      position: relative;
+      z-index: 1;
+      width: 24px;
+      height: 24px;
+    }
+
+    /* ---------- POPUP OVERLAY ---------- */
+    .popup-overlay {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at top, rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.96));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      z-index: 40;
+      padding: 12px;
+    }
+
+    .popup-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .popup-root {
+      width: 360px;
+      min-height: 320px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ---------- POPUP CARD (from previous advanced UI) ---------- */
+    .popup-card {
+      position: relative;
+      width: 100%;
+      padding: 14px 13px 14px;
+      border-radius: 18px;
+      background: radial-gradient(circle at top left, #111827 0, #020617 70%);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.98);
+      overflow: hidden;
+      animation: floatIn 0.35s ease-out forwards;
+      transform-origin: top center;
+    }
+
+    .popup-card::before {
+      content: "";
+      position: absolute;
+      inset: -120px;
+      background: conic-gradient(
+        from 180deg,
+        rgba(99, 102, 241, 0.13),
+        rgba(236, 72, 153, 0.09),
+        transparent,
+        rgba(56, 189, 248, 0.2),
+        transparent
+      );
+      opacity: 0.9;
+      mix-blend-mode: screen;
+      pointer-events: none;
+      animation: glowRotate 18s linear infinite;
+    }
+
+    .popup-inner {
+      position: relative;
+      z-index: 1;
+      backdrop-filter: blur(18px);
+    }
+
+    @keyframes floatIn {
+      from {
+        transform: translateY(10px) scale(0.97);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+    }
+
+    @keyframes glowRotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .title-block {
+      max-width: 70%;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.9);
+    }
+
+    .title {
+      font-size: 13px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .subtitle {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .chip {
+      font-size: 10px;
+      padding: 4px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      background: radial-gradient(circle at top, #020617, #020617);
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .chip span.icon {
+      font-size: 11px;
+    }
+
+    /* Close button */
+    .close-btn {
+      position: absolute;
+      top: 7px;
+      right: 7px;
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      border: 1px solid rgba(51, 65, 85, 0.9);
+      background: rgba(15, 23, 42, 0.98);
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.12s ease;
+      z-index: 2;
+    }
+
+    .close-btn:hover {
+      background: #111827;
+      transform: scale(1.03);
+      color: #e5e7eb;
+    }
+
+    /* Input section */
+    .section-label {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    label {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 4px;
+      margin-top: 4px;
+    }
+
+    textarea {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid rgba(31, 41, 55, 0.95);
+      background: radial-gradient(circle at top, #020617, #020617);
+      padding: 8px 9px;
+      font-size: 12px;
+      color: var(--text);
+      resize: vertical;
+      min-height: 70px;
+      outline: none;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease,
+        transform 0.12s ease;
+    }
+
+    textarea::placeholder {
+      color: #6b7280;
+      font-size: 11px;
+    }
+
+    textarea:focus {
+      border-color: rgba(129, 140, 248, 0.9);
+      box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .helper {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Buttons */
+    .btn-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    button {
+      border-radius: 999px;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 500;
+      transition: transform 0.12s ease, box-shadow 0.15s ease,
+        background 0.15s ease, opacity 0.12s ease;
+    }
+
+    .btn-primary {
+      padding: 7px 13px;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed, #ec4899);
+      background-size: 200% 200%;
+      color: #fff;
+      box-shadow: 0 12px 28px rgba(79, 70, 229, 0.7);
+      animation: gradientShift 9s ease infinite;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px) scale(1.01);
+      box-shadow: 0 16px 34px rgba(79, 70, 229, 0.9);
+    }
+
+    .btn-primary[disabled] {
+      opacity: 0.7;
+      cursor: wait;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .btn-secondary {
+      padding: 6px 11px;
+      background: rgba(15, 23, 42, 0.98);
+      border: 1px solid rgba(51, 65, 85, 0.9);
+      color: var(--muted);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(17, 24, 39, 1);
+      color: #e5e7eb;
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .pill-small {
+      font-size: 10px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 0.98);
+      color: var(--muted);
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Status */
+    .status-line {
+      margin-top: 6px;
+      font-size: 10px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.8);
+    }
+
+    .status-dot.warning {
+      background: #facc15;
+      box-shadow: 0 0 10px rgba(250, 204, 21, 0.8);
+    }
+
+    .status-dot.danger {
+      background: #f97373;
+      box-shadow: 0 0 10px rgba(248, 113, 113, 0.9);
+    }
+
+    .status-line strong {
+      color: #e5e7eb;
+    }
+
+    /* Result box */
+    .result-box {
+      margin-top: 10px;
+      border-radius: 12px;
+      background: radial-gradient(
+        circle at top right,
+        rgba(79, 70, 229, 0.1),
+        #020617
+      );
+      border: 1px solid rgba(31, 41, 55, 0.95);
+      padding: 8px 9px 9px;
+      font-size: 11px;
+      transform-origin: top;
+      animation: resultPop 0.25s ease-out;
+    }
+
+    @keyframes resultPop {
+      from {
+        opacity: 0;
+        transform: scale(0.97) translateY(3px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .result-title {
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .label-chip {
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 10px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 1);
+    }
+
+    .label-fake {
+      color: #fecaca;
+      border-color: rgba(248, 113, 113, 0.8);
+      background: rgba(127, 29, 29, 0.9);
+    }
+
+    .label-real {
+      color: #bbf7d0;
+      border-color: rgba(74, 222, 128, 0.8);
+      background: rgba(22, 101, 52, 0.9);
+    }
+
+    .label-unknown {
+      color: #fde68a;
+      border-color: rgba(234, 179, 8, 0.7);
+      background: rgba(113, 63, 18, 0.9);
+    }
+
+    /* Meter */
+    .meter {
+      margin-top: 4px;
+    }
+
+    .meter-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 10px;
+      color: var(--muted);
+      margin-bottom: 3px;
+    }
+
+    .score-number {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .score-safe { color: var(--safe); }
+    .score-med { color: var(--warning); }
+    .score-high { color: var(--danger); }
+
+    .meter-track {
+      position: relative;
+      width: 100%;
+      height: 6px;
+      border-radius: 999px;
+      background: linear-gradient(
+        90deg,
+        rgba(22, 163, 74, 0.3),
+        rgba(250, 204, 21, 0.3),
+        rgba(248, 113, 113, 0.3)
+      );
+      overflow: hidden;
+    }
+
+    .meter-fill {
+      position: absolute;
+      inset: 0;
+      width: 0%;
+      border-radius: inherit;
+      background: linear-gradient(
+        90deg,
+        #22c55e,
+        #fbbf24,
+        #f97373
+      );
+      transition: width 0.4s ease-out;
+    }
+
+    .flags-row {
+      margin-top: 5px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .flag-chip {
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 1);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .more-link {
+      margin-top: 6px;
+      font-size: 10px;
+      color: #a5b4fc;
+      text-decoration: underline;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .more-link:hover {
+      color: #c4b5fd;
+    }
+
+    .footer {
+      margin-top: 7px;
+      font-size: 9px;
+      color: #6b7280;
+      border-top: 1px solid rgba(15, 23, 42, 1);
+      padding-top: 4px;
+    }
+
+    .spinner {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      border: 2px solid rgba(248, 250, 252, 0.25);
+      border-top-color: #fff;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    code {
+      background: #020617;
+      padding: 1px 4px;
+      border-radius: 4px;
+      border: 1px solid #111827;
+      font-size: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-content">
+    <h1>Fake News & Deepfake Detection Demo</h1>
+    <p>
+      This is your normal website content. A floating AI shield icon is in the bottom-right corner.
+      Click it to open the fake news detection popup.
+    </p>
+  </div>
+
+  <!-- ---------- FLOATING ICON BUTTON ---------- -->
+  <div class="fab-wrapper">
+    <div class="fab-tooltip">Check fake news / forwards</div>
+    <button class="fab-button" id="fakeNewsFab" aria-label="Open Fake News Detector">
+      <!-- Little shield/AI icon (SVG) -->
+      <svg class="fab-icon" viewBox="0 0 24 24" fill="none">
+        <path
+          d="M12 2.5L5 5.5V11.5C5 16.3 8 19.9 12 21.5C16 19.9 19 16.3 19 11.5V5.5L12 2.5Z"
+          stroke="white"
+          stroke-width="1.6"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M10 10.7L11.4 12.1L14.4 9.1"
+          stroke="white"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </button>
+  </div>
+
+  <!-- ---------- POPUP OVERLAY + CARD ---------- -->
+  <div class="popup-overlay" id="fakeNewsOverlay">
+    <div class="popup-root">
+      <div class="popup-card">
+        <div class="popup-inner">
+          <button class="close-btn" id="popupCloseBtn">×</button>
+
+          <div class="header">
+            <div class="title-block">
+              <div class="badge">
+                <span class="badge-dot"></span>
+                Real-time AI Safety
+              </div>
+              <div class="title">FAKE NEWS AND DEEPFAKE DETECTION</div>
+              <div class="subtitle">
+                Quick-check any post or forward before you trust or share it.
+              </div>
+            </div>
+            <div class="chip">
+              <span class="icon">🧠</span>
+              v1.0 • BERT
+            </div>
+          </div>
+
+          <div class="section-label">Fake news / fake post checker</div>
+          <label for="textInput">Paste text to analyze</label>
+          <textarea
+            id="textInput"
+            placeholder="Paste a WhatsApp forward, tweet, or news snippet here..."
+          ></textarea>
+          <div class="helper">
+            Your backend model (e.g., BERT) will return a label like
+            <strong>FAKE</strong> or <strong>REAL</strong> with a probability score.
+          </div>
+
+          <div class="btn-row">
+            <button id="analyzeBtn" class="btn-primary">
+              <span id="btnIcon">⚡</span>
+              <span id="btnLabel">Analyze Now</span>
+            </button>
+            <button id="clearBtn" class="btn-secondary">Clear</button>
+            <div class="pill-small">
+              API:
+              <code>/api/check_text</code>
+            </div>
+          </div>
+
+          <div class="status-line" id="statusLine">
+            <span class="status-dot" id="statusDot"></span>
+            <span>Status: <strong>Idle</strong></span>
+          </div>
+
+          <div id="resultBox" class="result-box" style="display: none;">
+            <div class="result-header">
+              <div class="result-title" id="resultTitle">Result</div>
+              <div id="labelChip" class="label-chip label-unknown">UNKNOWN</div>
+            </div>
+
+            <div class="meter">
+              <div class="meter-label-row">
+                <span>Fake likelihood</span>
+                <span id="scoreNumber" class="score-number">--%</span>
+              </div>
+              <div class="meter-track">
+                <div id="meterFill" class="meter-fill"></div>
+              </div>
+            </div>
+
+            <div id="summaryText" style="margin-top: 4px;"></div>
+
+            <div class="flags-row" id="flagsRow"></div>
+
+            <div id="moreLink" class="more-link">
+              View full analysis dashboard →
+            </div>
+          </div>
+
+          <div class="footer">
+            This tool is an AI assistant. Always verify sensitive or viral content
+            using official sources and fact-checking websites.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---------- OPEN / CLOSE POPUP ----------
+    const fab = document.getElementById("fakeNewsFab");
+    const overlay = document.getElementById("fakeNewsOverlay");
+    const closeBtn = document.getElementById("popupCloseBtn");
+
+    fab.addEventListener("click", () => {
+      overlay.classList.add("visible");
+    });
+
+    closeBtn.addEventListener("click", () => {
+      overlay.classList.remove("visible");
+    });
+
+    // Close when clicking outside the card
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) {
+        overlay.classList.remove("visible");
+      }
+    });
+
+    // ---------- ANALYSIS LOGIC (same as before) ----------
+    const analyzeBtn = document.getElementById("analyzeBtn");
+    const btnIcon = document.getElementById("btnIcon");
+    const btnLabel = document.getElementById("btnLabel");
+    const clearBtn = document.getElementById("clearBtn");
+    const textInput = document.getElementById("textInput");
+    const statusLine = document.getElementById("statusLine");
+    const statusDot = document.getElementById("statusDot");
+
+    const resultBox = document.getElementById("resultBox");
+    const resultTitle = document.getElementById("resultTitle");
+    const labelChip = document.getElementById("labelChip");
+    const scoreNumber = document.getElementById("scoreNumber");
+    const meterFill = document.getElementById("meterFill");
+    const summaryText = document.getElementById("summaryText");
+    const flagsRow = document.getElementById("flagsRow");
+    const moreLink = document.getElementById("moreLink");
+
+    function setLoading(isLoading) {
+      if (isLoading) {
+        analyzeBtn.disabled = true;
+        const spinner = document.createElement("div");
+        spinner.className = "spinner";
+        btnIcon.innerHTML = "";
+        btnIcon.appendChild(spinner);
+        btnLabel.textContent = "Analyzing...";
+        statusDot.className = "status-dot warning";
+        statusLine.querySelector("span:nth-child(2)").innerHTML =
+          "Status: <strong>Analyzing text...</strong>";
+      } else {
+        analyzeBtn.disabled = false;
+        btnIcon.textContent = "⚡";
+        btnLabel.textContent = "Analyze Now";
+      }
+    }
+
+    function setStatusIdle() {
+      statusDot.className = "status-dot";
+      statusLine.querySelector("span:nth-child(2)").innerHTML =
+        "Status: <strong>Idle</strong>";
+    }
+
+    function setStatusError() {
+      statusDot.className = "status-dot danger";
+      statusLine.querySelector("span:nth-child(2)").innerHTML =
+        "Status: <strong style='color:#f97373'>Error contacting backend</strong>";
+    }
+
+    function setStatusDone(label) {
+      statusDot.className = label === "FAKE" ? "status-dot danger" : "status-dot";
+      statusLine.querySelector("span:nth-child(2)").innerHTML =
+        "Status: <strong>Done (" + label + ")</strong>";
+    }
+
+    function updateLabelChip(label) {
+      labelChip.className = "label-chip";
+      if (label === "FAKE") {
+        labelChip.classList.add("label-fake");
+      } else if (label === "REAL") {
+        labelChip.classList.add("label-real");
+      } else {
+        labelChip.classList.add("label-unknown");
+      }
+      labelChip.textContent = label;
+    }
+
+    function updateScore(score) {
+      if (typeof score !== "number") {
+        scoreNumber.textContent = "--%";
+        meterFill.style.width = "0%";
+        return;
+      }
+      const pct = Math.round(score * 100);
+      scoreNumber.textContent = pct + "%";
+      meterFill.style.width = Math.min(Math.max(pct, 0), 100) + "%";
+
+      scoreNumber.className = "score-number";
+      if (pct < 40) {
+        scoreNumber.classList.add("score-safe");
+      } else if (pct < 70) {
+        scoreNumber.classList.add("score-med");
+      } else {
+        scoreNumber.classList.add("score-high");
+      }
+    }
+
+    function updateSummary(label, score) {
+      let summary;
+      if (label === "FAKE") {
+        summary =
+          "This content is likely FAKE / MISLEADING. Do not trust it blindly and avoid forwarding without verification.";
+      } else if (label === "REAL") {
+        summary =
+          "This content appears REAL / TRUSTWORTHY based on the model. Still, cross-check if it is sensitive or unbelievable.";
+      } else {
+        summary =
+          "The model is not confident. Treat this content with caution and verify using reliable sources.";
+      }
+      summaryText.textContent = summary;
+    }
+
+    function updateFlags(flags) {
+      flagsRow.innerHTML = "";
+      (flags || []).forEach((f) => {
+        const span = document.createElement("span");
+        span.className = "flag-chip";
+        span.textContent = f;
+        flagsRow.appendChild(span);
+      });
+      if (!flags || !flags.length) {
+        const span = document.createElement("span");
+        span.className = "flag-chip";
+        span.textContent = "No specific flags returned";
+        flagsRow.appendChild(span);
+      }
+    }
+
+    analyzeBtn.addEventListener("click", async () => {
+      const text = textInput.value.trim();
+      if (!text) {
+        alert("Please paste some text first.");
+        return;
+      }
+
+      setLoading(true);
+      resultBox.style.display = "none";
+
+      try {
+        // 🔗 Change URL to your backend endpoint
+        const response = await fetch("http://localhost:8000/api/check_text", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Backend returned " + response.status);
+        }
+
+        const data = await response.json();
+
+        const label = (data.label || "unknown").toUpperCase();
+        const score = typeof data.score === "number" ? data.score : null;
+        const flags = data.flags || data.reasons || [];
+
+        resultTitle.textContent = "Result: " + label;
+        updateLabelChip(label);
+        updateScore(score);
+        updateSummary(label, score);
+        updateFlags(flags);
+
+        resultBox.style.display = "block";
+        setStatusDone(label);
+      } catch (err) {
+        console.error(err);
+        updateLabelChip("UNKNOWN");
+        updateScore(null);
+        summaryText.textContent =
+          "Could not reach the backend. Make sure the API is running at http://localhost:8000/api/check_text";
+        updateFlags([]);
+        resultBox.style.display = "block";
+        setStatusError();
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    clearBtn.addEventListener("click", () => {
+      textInput.value = "";
+      resultBox.style.display = "none";
+      setStatusIdle();
+    });
+
+    moreLink.addEventListener("click", () => {
+      // Change this to your full frontend / dashboard URL
+      window.open("http://localhost:5500/index.html", "_blank");
+    });
+  </script>
+</body>
+</html>
